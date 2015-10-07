@@ -68,10 +68,19 @@ def run_cmd(cmd):
 def init_git_repository():
     Logger().log('Initializing empty git repository...')
     run_cmd('git init')
-    with open('.gitignore', 'w') as f:
-        f.write('sharelatex-git.py\n')
-        f.write('sharelatex-git\n')
-        f.write('.idea/*')
+
+def ensure_gitignore_is_fine():
+    with open('.gitignore', 'r') as f:
+        lines=[line.strip() for line in f.readlines()]
+
+    with open('.gitignore', 'a') as f:
+        def write_if_not_there(s):
+            if s not in lines:
+                f.write(s + '\n')
+
+        write_if_not_there('sharelatex-git.py')
+        write_if_not_there('sharelatex-git')
+        write_if_not_there('.sharelatex-git')
     f.close()
 
 def is_git_repository():
@@ -90,7 +99,7 @@ def files_changed():
     out = run_cmd('git status .').decode('utf-8')
     return 'nothing to commit, working directory clean' not in out.lower()
 
-def fetch_updates(sharelatex_id, skip_LaTeX_folder=False):
+def fetch_updates(sharelatex_id, skip_LaTeX_folder=True):
     file_name = 'sharelatex.zip'
     final_url = "https://www.sharelatex.com/project/{}/download/zip".format(sharelatex_id)
 
@@ -102,14 +111,56 @@ def fetch_updates(sharelatex_id, skip_LaTeX_folder=False):
     os.remove(file_name)
 
     if skip_LaTeX_folder:
-        Logger().log("Moving files out of LaTeX folder")
+        Logger().log("Moving files out of LaTeX folder...")
         for filename in os.listdir('LaTeX'):
             shutil.move(os.path.join('LaTeX', filename), '.')
         os.rmdir('LaTeX')
 
-def go():
+def read_saved_sharelatex_document():
+    doc = '.sharelatex-git'
+
+    try:
+        with open(doc, 'r') as f:
+            return f.readline().strip()
+    except:
+        return None
+
+def write_saved_sharelatex_document(id):
+    doc = '.sharelatex-git'
+
+    try:
+        with open(doc, 'w') as f:
+            f.write('{}\n'.format(id))
+    except:
+        Logger().log("Problem creating .sharelatex-git file", True, 'YELLOW')
+
+def determine_id(id):
+    saved_id = read_saved_sharelatex_document()
+    if id and saved_id:
+        if id != saved_id:
+            while True:
+                print(
+                    'Conflicting ids. Given {old}, but previous records show {new}. Which to use?\n1. {old} [old]\n2. {new} [new]'.format(
+                        old=saved_id, new=id))
+                ans = input('Id to use [blank = 2.] -> ')
+                if ans.strip() == '':
+                    ans = '2'
+                if ans.strip() == '1' or ans.strip() == '2':
+                    break
+            id = saved_id if int(ans.strip()) == 1 else id
+    elif not saved_id and not id:
+        Logger().fatal_error('No id supplied! See (-h) for usage.')
+    elif saved_id:
+        id = saved_id
+
+    return id
+
+def go(id):
+    id = determine_id(id)
+
     ensure_git_repository_started()
-    fetch_updates('test_id', False)
+    ensure_gitignore_is_fine()
+    fetch_updates(id, False)
 
     if files_changed():
         message = 'Adding files test'
@@ -117,6 +168,8 @@ def go():
         commit_all_changes(message)
     else:
         Logger().log('No changes to commit.')
+
+    write_saved_sharelatex_document(id)
     Logger().log('All done!')
 
-go()
+go('test')
