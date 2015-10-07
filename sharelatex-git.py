@@ -221,9 +221,13 @@ def extract_id_from_input(i):
             Logger().log('Unrecognized id supplied ({})'.format(i))
 
 def parse_input():
-    parser = OptionParser()
+    parser = OptionParser("usage: %prog [options] [id].\n"
+    "e.g.\n\t%prog -m 'Wrote Thesis introduction' https://www.sharelatex.com/project/56147712cc7f5d0adeadbeef\n"
+    "\t%prog -m 'Wrote Thesis introduction' 56147712cc7f5d0adeadbeef\n"
+    "\t%prog -m 'Wrote Thesis introduction'                                                            [id from last invocation is used]\n"
+    "\t%prog                                                                                           [id from last invocation is used, nothing is added to commit message]")
     parser.add_option('-m', '--message', help='Commit message (default: "").', dest='message', type='string', default='')
-    parser.add_option('-p', "--push', help='Push after doing commit (default: don't push) [EXPERIMENTAL]", dest='do_push', action='store_true',default=False)
+    parser.add_option('-p', "--push", help="Push after doing commit (default: don't push) [EXPERIMENTAL]", dest='do_push', action='store_true',default=False)
 
     (options, args) = parser.parse_args()
 
