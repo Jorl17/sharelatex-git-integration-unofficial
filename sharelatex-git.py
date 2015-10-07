@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from optparse import OptionParser
 import os
 import shutil
 import subprocess
@@ -6,6 +7,8 @@ import urllib.request
 from zipfile import ZipFile
 import time
 import sys
+import urllib.parse
+import re
 
 
 def get_timestamp():
@@ -69,30 +72,45 @@ def init_git_repository():
     Logger().log('Initializing empty git repository...')
     run_cmd('git init')
 
+def get_base_git_root():
+    return run_cmd('git rev-parse --show-toplevel').decode('utf-8').strip()
+
+def get_git_ignore():
+    git_base = get_base_git_root()
+    return os.path.join(git_base, '.gitignore')
+
 def ensure_gitignore_is_fine():
-    with open('.gitignore', 'r') as f:
-        lines=[line.strip() for line in f.readlines()]
+    git_ignore = get_git_ignore()
+    try:
+        with open(git_ignore, 'r') as f:
+            lines=[line.strip() for line in f.readlines()]
+    except:
+        lines = []
 
-    with open('.gitignore', 'a') as f:
-        def write_if_not_there(s):
-            if s not in lines:
-                f.write(s + '\n')
+    try:
+        with open(git_ignore, 'a') as f:
+            def write_if_not_there(s):
+                if s not in lines:
+                    f.write(s + '\n')
 
-        write_if_not_there('sharelatex-git.py')
-        write_if_not_there('sharelatex-git')
-        write_if_not_there('.sharelatex-git')
-    f.close()
+            write_if_not_there('sharelatex-git.py')
+            write_if_not_there('sharelatex-git')
+            write_if_not_there('.sharelatex-git')
+    except:
+        Logger().log("Can't edit .gitignore file [{}].".format(git_ignore), True, 'YELLOW')
+
 
 def is_git_repository():
-    dir = '.git'
-    os.path.exists(dir) and os.path.isdir(dir)
+    status = run_cmd('git status').decode('utf-8')
+    return 'not a git repository' not in status
 
 def ensure_git_repository_started():
     if not is_git_repository():
         init_git_repository()
 
 def commit_all_changes(message):
-    run_cmd('git add -A')
+    run_cmd('git add -A .')
+    run_cmd('git add -A {}'.format(get_git_ignore()))
     if message:
         run_cmd('git commit -m"[sharelatex-git-integration {}] {}"'.format(get_timestamp(),message))
     else:
@@ -158,7 +176,14 @@ def determine_id(id):
 
     return id
 
-def go(id, message):
+def git_push():
+    Logger().log(
+        'Pushing is an experimental feature. If you experience lockdowns, hit CTRL+C. It means you probably have not configured password aching and/or passwordless pushes.',
+        True, 'YELLOW')
+    run_cmd('git push origin master')
+
+
+def go(id, message, push):
     id = determine_id(id)
 
     ensure_git_repository_started()
@@ -171,10 +196,44 @@ def go(id, message):
         else:
             Logger().log('Comitting changes. No message.')
         commit_all_changes(message)
+
+        if push:
+            git_push()
     else:
         Logger().log('No changes to commit.')
 
     write_saved_sharelatex_document(id)
     Logger().log('All done!')
 
-go('test')
+def extract_id_from_input(i):
+    if 'http:' or 'https:' in i.lower():
+        try:
+            path = urllib.parse.urlsplit(i).path
+            p = re.compile("/project/([a-zA-Z0-9]*).*", re.IGNORECASE)
+            return p.search(path).group(1)
+        except:
+            Logger().log('Unrecognized id supplied ({}) [http/https]'.format(i))
+    else:
+        p = re.compile("[a-zA-Z0-9]*")
+        if p.match(i):
+            return i
+        else:
+            Logger().log('Unrecognized id supplied ({})'.format(i))
+
+def parse_input():
+    parser = OptionParser()
+    parser.add_option('-m', '--message', help='Commit message (default: "").', dest='message', type='string', default='')
+    parser.add_option('-p', "--push', help='Push after doing commit (default: don't push) [EXPERIMENTAL]", dest='do_push', action='store_true',default=False)
+
+    (options, args) = parser.parse_args()
+
+    if len(args) == 1:
+        id = extract_id_from_input(args[0])
+    elif len(args) > 1:
+        parser.error('Too many arguments.')
+    else:
+        id = None
+
+    return id, options.message, options.do_push
+
+go(*parse_input())
