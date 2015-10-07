@@ -1,2 +1,150 @@
 # sharelatex-git-integration-unofficial
-Easily track your sharelatex changes using git. One simple command to rule them all!
+
+**sharelatex-git-integration-unofficial** is a Python 3 script that can act as a **free replacement** to [ShareLaTeX](http://www.sharelatex.com)'s github integration.
+
+With **sharelatex-git-integration-unofficial**, you can use any folder in a **git repository** to keep your ShareLaTeX project and track its changes. The script automatically **downloads the most recent files** and **does git commits for you**. You can also specify an optional commit message. It will even create your git repository if you haven't yet!
+
+The only requirement of **sharelatex-git-integration-unofficial** is that you set your project's settings to public (you can use the read only option). Do that, and you will instantly be able to use this script to track the changes to your project, be it a thesis, a paper or something entirely different.
+
+**Install instructions** can be found [here](#how-do-i-installuninstall-it). **Example usage** can be found [here](#example-usage).
+
+It should run in any operating system (Windows, Mac OS X, Linux).
+
+Table of Contents
+=================
+
+  * [Quickstart (Getting Started)](#quickstart-getting-started)
+  * [How do I install/uninstall it?](#how-do-i-installuninstall-it)
+    * [Examples:](#examples)
+      * [Install](#install)
+      * [Install to /usr/local prefix](#install-to-usrlocal-prefix)
+      * [Uninstall](#uninstall)
+      * [Uninstall from /usr/local prefix](#uninstall-from-usrlocal-prefix)
+  * [How does it work? Is this legal?](#how-does-it-work-is-this-legal)
+  * [Can I also push changes from git to ShareLaTeX? (e.g. do a <em>git revert</em> and change my project)](#can-i-also-push-changes-from-git-to-sharelatex-eg-do-a-git-revert-and-change-my-project)
+  * [Isn't it dangerous to make my project public?](#isnt-it-dangerous-to-make-my-project-public)
+  * [The URL is too large...can't I initialize the application with something else?](#the-url-is-too-largecant-i-initialize-the-application-with-something-else)
+  * [If it does commits for me, won't it commit other files on my git tree?](#if-it-does-commits-for-me-wont-it-commit-other-files-on-my-git-tree)
+  * [Can it also push the commits for me?](#can-it-also-push-the-commits-for-me)
+  * [Why not use the premium version?](#why-not-use-the-premium-version)
+  * [Example Usage](#example-usage)
+    * [Add a commit after editing the ShareLaTeX project](#add-a-commit-after-editing-the-sharelatex-project)
+    * [Push changes after adding a commit [experimental]](#push-changes-after-adding-a-commit-experimental)
+  * [What are all the options?](#what-are-all-the-options)
+
+(TOC created with the help of [gh-md-toc](https://github.com/ekalinin/github-markdown-toc))
+
+# Quickstart (Getting Started)
+
+This section tells you all you have to know to get started using **sharelatex-git-integration-unofficial** (from now on abbreviated **sharelatex-git**). It's *really* easy!
+
+1. First, **[install](#how-do-i-installuninstall-it) the script.**
+
+2. Second, **set your ShareLaTeX project to public** (you can use the read only option).
+
+3. **Change directory to the folder where you want to keep your ShareLaTeX files**. This folder can already be a part of a git repository, but **sharelatex-git** will create a repository if it doesn't exist yet. E.g.
+
+		cd <my desired ShareLaTeX project folder>
+
+4. **Copy the URL address of your ShareLaTeX project** (we'll use https://www.sharelatex.com/project/56147712cc7f5d0adeadbeef) as an example).
+
+5. Invoke **sharelatex-git** with that address
+ 
+		sharelatex-git https://www.sharelatex.com/project/56147712cc7f5d0adeadbeef
+        
+6. **All done!** Whenever you want to add a new commit with your update ShareLaTeX project, come back to this folder and run
+ 
+		sharelatex-git
+        
+   **You don't need to pass the URL ever again.** You can also pass commit messages to better track your changes. For that, use the `-m` option as so:
+      
+	    sharelatex-git -m "Started the Experimental Validation section"
+
+Isn't that simple?    
+
+# How do I install/uninstall it?
+ Just clone the repository and run ``install.sh``, or ``uninstall.sh`` to remove it. It will install to /usr/bin, but you can change this by passing your desired prefix to install.sh, as an argument. This will install the **sharelatex-git-integration-unofficial** application/script and make it available for you to run.
+
+## Examples:
+### Install
+    git clone https://github.com/Jorl17/sharelatex-git-integration-unofficial
+    cd sharelatex-git-integration-unofficial
+    chmod +x install.sh uninstall.sh
+    sudo ./install.sh
+### Install to /usr/local prefix
+    git clone https://github.com/Jorl17/sharelatex-git-integration-unofficial
+    cd sharelatex-git-integration-unofficial
+    chmod +x install.sh uninstall.sh
+    sudo ./install.sh /usr/local
+### Uninstall 
+    ./uninstall.sh
+### Uninstall from /usr/local prefix
+    ./uninstall.sh /usr/local
+
+# How does it work? Is this legal?
+
+**sharelatex-git-integration-unofficial** doesn't do anything illegal. Since your project is set to public, any person with the URL can access the files and download them. In theory, you could do what **sharelatex-git-integration-unofficial** does on your own. You would download all the files, put them in your folder, and then run a couple of git commands.
+
+# Can I also push changes from git to ShareLaTeX? (e.g. do a *git revert* and change my project)
+
+Unfortunately, **this is not supported**. In theory, this could be done if you set your project to public and provided your username and password to **sharelatex-git-integration-unofficial**, but at the moment it is not implemented.
+
+However, you **can** do all the changes you want in your repository, and then simply copy the affected files manually to your project. It's kind of a hassle, but unless you're always deleting what you write, 99.99% of the time you'll just want to track the changes -- **that's what this application is for**.
+
+# Isn't it dangerous to make my project public?
+
+**I don't think so.** As long as you don't share your URL, you should be safe, but don't take my word for it. Perhaps I can cook up a future version where you provide the username and password to **sharelatex-git-integration-unofficial**, but at the moment this really seems unnecessary.
+
+**If this really annoys you, open up an issue** and I'll be sure to get down to it and code you a non-public version (or, better yet, submit a patch if you can!). Heck, that might also support pushing changes from git to your project!
+
+# The URL is too large...can't I initialize the application with something else?
+
+**Well, yes!** If your URL is https://www.sharelatex.com/project/56147712cc7f5d0adeadbeef you can happily just pass 56147712cc7f5d0adeadbeef (the "project ID") and it will work. However, since you only really need to pass the URL once, I don't really see the point.
+
+# If it does commits for me, won't it commit other files on my git tree?
+
+**No, not at all!** If you see this behavior, it's a bug, please report it. The only files that **sharelatex-git-integration-unofficial** should include in its commits are the files associated with your project and, occasionally, your .gitignore file.
+
+# Can it also push the commits for me?
+
+**This is implemented, but it is experimental** (`-p` option). It should work if you have passwordless pushing in your git settings (be wary of *https* clone links!). Otherwise, it currently blocks and you have to kill it with a  CTRL+C. If you really need this feature, be sure to open up an issue and I'll get straight to it (or better yet, send me a patch!).
+
+# Why not use the premium version?
+
+I really like ShareLaTeX, but I'm not willing to pay for just this particular feature that I can legally automate on my own. It's your choice :)
+
+# Example Usage
+Here are a couple of examples on how to use **sharelatex-git-integration-unofficial**. Most of these are covered in the [Quickstart guide](#quickstart-getting-started).
+
+## Add a commit after editing the ShareLaTeX project
+
+That's easy! Do
+
+	sharelatex-git
+    
+Yes, that easy! You can personalize the commit message (e.g. to specify what you changed in the document) with the `-m` option
+
+	sharelatex-git -m "Started the Experimental Validation section"
+    
+## Push changes after adding a commit [experimental]
+
+You can use the `-p` option:
+
+
+	sharelatex-git -m "Started the Experimental Validation section" -p
+    
+
+
+   
+# What are all the options?
+
+```
+  -h, --help            show this help message and exit
+  -m MESSAGE, --message=MESSAGE
+                        Commit message (default: "").
+  -p, --push            Push after doing commit (default: don't push)
+                        [EXPERIMENTAL]
+```
+
+
+
