@@ -1,4 +1,26 @@
 #!/usr/bin/env python3
+##
+## Copyright (C) 2015 João Ricardo Lourenço <jorl17.8@gmail.com>
+##
+## Github: https://github.com/Jorl17
+##
+## Project main repository: https://github.com/Jorl17/sharelatex-git-integration-unofficial
+##
+## This file is part of sharelatex-git-integration-unofficial.
+##
+## sharelatex-git-integration-unofficial is free software: you can redistribute it and/or modify
+## it under the terms of the GNU General Public License as published by
+## the Free Software Foundation, either version 2 of the License, or
+## (at your option) any later version.
+##
+## sharelatex-git-integration-unofficial is distributed in the hope that it will be useful,
+## but WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+## GNU General Public License for more details.
+##
+## You should have received a copy of the GNU General Public License
+## along with sharelatex-git-integration-unofficial.  If not, see <http://www.gnu.org/licenses/>.
+##
 from optparse import OptionParser
 import os
 import shutil
@@ -10,7 +32,13 @@ import sys
 import urllib.parse
 import re
 
-
+#------------------------------------------------------------------------------
+# Logger class, used to log messages. A special method can be used to
+# shutdown the application with an error message.
+#
+# This is a modified version of what we used with
+# https://github.com/xJota/NowCrawling
+#------------------------------------------------------------------------------
 def get_timestamp():
     return time.strftime('%Y/%m/%d %H:%M:%S')
 
@@ -59,6 +87,10 @@ class Logger:
         self.error(err, log_time, indentation_level)
         exit()
 
+#------------------------------------------------------------------------------
+# Run a command and return its output. If there's a failure, crash and burn,
+# but only if allow_fail = False.
+#------------------------------------------------------------------------------
 def run_cmd(cmd, allow_fail=False):
     process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     status = process.wait()
@@ -67,18 +99,31 @@ def run_cmd(cmd, allow_fail=False):
 
     return process.communicate()[0]
 
-
+#------------------------------------------------------------------------------
+# Initialize an empty git repository
+#------------------------------------------------------------------------------
 def init_git_repository():
     Logger().log('Initializing empty git repository...')
     run_cmd('git init')
 
+#------------------------------------------------------------------------------
+# Get the root of an existing GIT repository. Useful to find stuff like
+# .gitignore
+#------------------------------------------------------------------------------
 def get_base_git_root():
     return run_cmd('git rev-parse --show-toplevel').decode('utf-8').strip()
 
+#------------------------------------------------------------------------------
+# Get the path to the .gitignore of this git repository
+#------------------------------------------------------------------------------
 def get_git_ignore():
     git_base = get_base_git_root()
     return os.path.join(git_base, '.gitignore')
 
+#------------------------------------------------------------------------------
+# Make sure that sharelatex-git's files are not added to project management,
+# and that they're always present in the .gitignore.
+#------------------------------------------------------------------------------
 def ensure_gitignore_is_fine():
     git_ignore = get_git_ignore()
     try:
@@ -99,15 +144,27 @@ def ensure_gitignore_is_fine():
     except:
         Logger().log("Can't edit .gitignore file [{}].".format(git_ignore), True, 'YELLOW')
 
-
+#------------------------------------------------------------------------------
+# Checks if this directory is part of a git repository
+#------------------------------------------------------------------------------
 def is_git_repository():
     status = run_cmd('git status', True).decode('utf-8')
     return 'not a git repository' not in status.lower()
 
+#------------------------------------------------------------------------------
+# Make sure that we are in a git repository. It either already exists, or
+# we create it.
+#------------------------------------------------------------------------------
 def ensure_git_repository_started():
     if not is_git_repository():
         init_git_repository()
 
+#------------------------------------------------------------------------------
+# Commit all changes. Note that we do this with '.' at the end of the command,
+# so as to only commit changes in our directory. We also commit any possible
+# changes to the gitignore file. The commit message is optional and it is
+# always preceeded by a timestamp and the sharelatex-git-integration identifier
+#------------------------------------------------------------------------------
 def commit_all_changes(message):
     run_cmd('git add -A .')
     run_cmd('git add -A {}'.format(get_git_ignore()))
@@ -116,10 +173,18 @@ def commit_all_changes(message):
     else:
         run_cmd('git commit -m"[sharelatex-git-integration {}]"'.format(get_timestamp()))
 
+#------------------------------------------------------------------------------
+# Check if any files have changed. This exploits the git status command on the
+# current director
+#------------------------------------------------------------------------------
 def files_changed():
     out = run_cmd('git status .').decode('utf-8')
     return 'nothing to commit, working directory clean' not in out.lower()
 
+#------------------------------------------------------------------------------
+# Download the sharelatex project and extract it. Die out if there's any
+# problem (e.g. bad ID, bad network connection or private project)
+#------------------------------------------------------------------------------
 def fetch_updates(sharelatex_id, skip_LaTeX_folder=True):
     file_name = 'sharelatex.zip'
     final_url = "https://www.sharelatex.com/project/{}/download/zip".format(sharelatex_id)
@@ -146,6 +211,10 @@ def fetch_updates(sharelatex_id, skip_LaTeX_folder=True):
             shutil.move(os.path.join('LaTeX', filename), '.')
         os.rmdir('LaTeX')
 
+#------------------------------------------------------------------------------
+# Fetch the ID of the sharelatex document/project from a previous invocation
+# These should be stored in a .sharelatex-git file.
+#------------------------------------------------------------------------------
 def read_saved_sharelatex_document():
     doc = '.sharelatex-git'
 
@@ -155,6 +224,10 @@ def read_saved_sharelatex_document():
     except:
         return None
 
+#------------------------------------------------------------------------------
+# Write the ID of the sharelatex document/project so that future invocations
+# do not require it. This is stored in a ,sharelatex-git file.
+#------------------------------------------------------------------------------
 def write_saved_sharelatex_document(id):
     doc = '.sharelatex-git'
 
@@ -164,6 +237,12 @@ def write_saved_sharelatex_document(id):
     except:
         Logger().log("Problem creating .sharelatex-git file", True, 'YELLOW')
 
+#------------------------------------------------------------------------------
+# Given an id passed by the user (potentially None/empty), as well as the
+# .sharelatex-git file from previous invocations, determine the id of
+# the sharelatex project. In case of conflict, ask the user, but default to
+# the one that he/she supplied.
+#------------------------------------------------------------------------------
 def determine_id(id):
     saved_id = read_saved_sharelatex_document()
     if id and saved_id:
@@ -185,13 +264,20 @@ def determine_id(id):
 
     return id
 
+#------------------------------------------------------------------------------
+# EXPERIMENTAL. Do a git push. FIXME
+#------------------------------------------------------------------------------
 def git_push():
     Logger().log(
         'Pushing is an experimental feature. If you experience lockdowns, hit CTRL+C. It means you probably have not configured password aching and/or passwordless pushes.',
         True, 'YELLOW')
     run_cmd('git push origin master')
 
-
+#------------------------------------------------------------------------------
+# The body of the application. Determine the ids, make sure we're in a git
+# repository with all the right gitignore files, fetch the project files,
+# commit any changes and also push them if the user requested.
+#------------------------------------------------------------------------------
 def go(id, message, push):
     id = determine_id(id)
 
@@ -214,6 +300,11 @@ def go(id, message, push):
     write_saved_sharelatex_document(id)
     Logger().log('All done!')
 
+#------------------------------------------------------------------------------
+# Determine the ID from user-supplied input. The user can supply a URL or
+# the ID directly. Note that the user can even pass the ZIP URL directly, as
+# the regex catches only the relevant portion.
+#------------------------------------------------------------------------------
 def extract_id_from_input(i):
     if 'http:' or 'https:' in i.lower():
         try:
@@ -221,7 +312,7 @@ def extract_id_from_input(i):
             p = re.compile("/project/([a-zA-Z0-9]*).*", re.IGNORECASE)
             return p.search(path).group(1)
         except:
-            Logger().log('Unrecognized id supplied ({}) [http/https]'.format(i))
+            Logger().fatal_error('Unrecognized id supplied ({}) [http/https]'.format(i))
     else:
         p = re.compile("[a-zA-Z0-9]*")
         if p.match(i):
@@ -229,6 +320,9 @@ def extract_id_from_input(i):
         else:
             Logger().log('Unrecognized id supplied ({})'.format(i))
 
+#------------------------------------------------------------------------------
+# Parse user input.
+#------------------------------------------------------------------------------
 def parse_input():
     parser = OptionParser("usage: %prog [options] [id].\n"
     "e.g.\n\t%prog -m 'Wrote Thesis introduction' https://www.sharelatex.com/project/56147712cc7f5d0adeadbeef\n"
@@ -249,4 +343,7 @@ def parse_input():
 
     return id, options.message, options.do_push
 
+#------------------------------------------------------------------------------
+# Go, go, go!
+#------------------------------------------------------------------------------
 go(*parse_input())

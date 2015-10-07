@@ -46,13 +46,13 @@ This section tells you all you have to know to get started using **sharelatex-gi
 
 		cd <my desired ShareLaTeX project folder>
 
-4. **Copy the URL address of your ShareLaTeX project** (we'll use https://www.sharelatex.com/project/56147712cc7f5d0adeadbeef) as an example).
+4. **Copy the URL address of your ShareLaTeX project** (we'll use https://www.sharelatex.com/project/56147712cc7f5d0adeadbeef as an example).
 
 5. Invoke **sharelatex-git** with that address
  
 		sharelatex-git https://www.sharelatex.com/project/56147712cc7f5d0adeadbeef
         
-6. **All done!** Whenever you want to add a new commit with your update ShareLaTeX project, come back to this folder and run
+6. **All done!** Whenever you want to add a new commit with your updated ShareLaTeX project changes, come back to this folder and run
  
 		sharelatex-git
         
