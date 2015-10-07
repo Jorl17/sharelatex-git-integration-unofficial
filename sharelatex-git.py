@@ -4,7 +4,7 @@ import os
 import shutil
 import subprocess
 import urllib.request
-from zipfile import ZipFile
+from zipfile import ZipFile, BadZipFile
 import time
 import sys
 import urllib.parse
@@ -125,12 +125,21 @@ def fetch_updates(sharelatex_id, skip_LaTeX_folder=True):
     final_url = "https://www.sharelatex.com/project/{}/download/zip".format(sharelatex_id)
 
     Logger().log("Downloading files from {}...".format(final_url))
-    urllib.request.urlretrieve(final_url, file_name)
+    try:
+        urllib.request.urlretrieve(final_url, file_name)
+    except:
+        Logger().fatal_error('Could not retrieve files. Perhaps a temporary network failure? Invalid id?')
     Logger().log("Decompressing files...")
-    with ZipFile(file_name, 'r') as f:
-        f.extractall()
+    try:
+        with ZipFile(file_name, 'r') as f:
+            f.extractall()
+    except BadZipFile:
+        os.remove(file_name)
+        Logger().fatal_error("Downloaded file is not a zip file. Have you made sure that your project is public?")
+
     os.remove(file_name)
 
+    # This is deprecated and a mistake. Blame J'Pedro's thesis.
     if skip_LaTeX_folder:
         Logger().log("Moving files out of LaTeX folder...")
         for filename in os.listdir('LaTeX'):
