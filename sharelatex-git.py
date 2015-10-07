@@ -59,11 +59,11 @@ class Logger:
         self.error(err, log_time, indentation_level)
         exit()
 
-def run_cmd(cmd):
-    process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+def run_cmd(cmd, allow_fail=False):
+    process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     status = process.wait()
-    if status != 0:
-        Logger().fatal_error('Error executing "{}": error code {}'.format(cmd, status))
+    if not allow_fail and status != 0:
+            Logger().fatal_error('Error executing "{}": error code {}'.format(cmd, status))
 
     return process.communicate()[0]
 
@@ -101,8 +101,8 @@ def ensure_gitignore_is_fine():
 
 
 def is_git_repository():
-    status = run_cmd('git status').decode('utf-8')
-    return 'not a git repository' not in status
+    status = run_cmd('git status', True).decode('utf-8')
+    return 'not a git repository' not in status.lower()
 
 def ensure_git_repository_started():
     if not is_git_repository():
