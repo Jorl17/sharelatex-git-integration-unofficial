@@ -93,7 +93,10 @@ def ensure_git_repository_started():
 
 def commit_all_changes(message):
     run_cmd('git add -A')
-    run_cmd('git commit -m"[sharelatex-git-integration {}] {}"'.format(get_timestamp(),message))
+    if message:
+        run_cmd('git commit -m"[sharelatex-git-integration {}] {}"'.format(get_timestamp(),message))
+    else:
+        run_cmd('git commit -m"[sharelatex-git-integration {}]"'.format(get_timestamp()))
 
 def files_changed():
     out = run_cmd('git status .').decode('utf-8')
@@ -155,7 +158,7 @@ def determine_id(id):
 
     return id
 
-def go(id):
+def go(id, message):
     id = determine_id(id)
 
     ensure_git_repository_started()
@@ -163,8 +166,10 @@ def go(id):
     fetch_updates(id, False)
 
     if files_changed():
-        message = 'Adding files test'
-        Logger().log('Comitting changes. Message: {}'.format(message))
+        if message:
+            Logger().log('Comitting changes. Message: {}.'.format(message))
+        else:
+            Logger().log('Comitting changes. No message.')
         commit_all_changes(message)
     else:
         Logger().log('No changes to commit.')
