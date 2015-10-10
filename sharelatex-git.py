@@ -95,7 +95,7 @@ def run_cmd(cmd, allow_fail=False):
     process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     status = process.wait()
     if not allow_fail and status != 0:
-            Logger().fatal_error('Error executing "{}": error code {}'.format(cmd, status))
+            Logger().fatal_error('Error executing "{}": error code {}. Output: {}'.format(cmd, status, process.communicate()[0]))
 
     return process.communicate()[0]
 
@@ -175,7 +175,7 @@ def commit_all_changes(message):
 
 #------------------------------------------------------------------------------
 # Check if any files have changed. This exploits the git status command on the
-# current director
+# current directory
 #------------------------------------------------------------------------------
 def files_changed():
     out = run_cmd('git status .').decode('utf-8')
@@ -226,7 +226,7 @@ def read_saved_sharelatex_document():
 
 #------------------------------------------------------------------------------
 # Write the ID of the sharelatex document/project so that future invocations
-# do not require it. This is stored in a ,sharelatex-git file.
+# do not require it. This is stored in a .sharelatex-git file.
 #------------------------------------------------------------------------------
 def write_saved_sharelatex_document(id):
     doc = '.sharelatex-git'
