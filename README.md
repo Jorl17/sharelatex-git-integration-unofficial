@@ -6,7 +6,7 @@ With **sharelatex-git-integration-unofficial**, you can use any folder in a **gi
 
 The only requirement of **sharelatex-git-integration-unofficial** is that you set your project's settings to public (you can use the read only option). Do that, and you will instantly be able to use this script to track the changes to your project, be it a thesis, a paper or something entirely different.
 
-**Install instructions** can be found [here](#how-do-i-installuninstall-it). **Example usage** can be found [here](#example-usage).
+**Install instructions** can be found [here](#how-do-i-installuninstall-it). A **Quickstart guide** can be found [here](#quickstart-getting-started). Other **example usage** can be found [here](#example-usage).
 
 It should run in any operating system (Windows, Mac OS X, Linux).
 
