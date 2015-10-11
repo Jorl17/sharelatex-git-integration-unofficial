@@ -306,7 +306,7 @@ def go(id, message, push):
 # the regex catches only the relevant portion.
 #------------------------------------------------------------------------------
 def extract_id_from_input(i):
-    if 'http:' or 'https:' in i.lower():
+    if 'http:' in i.lower() or 'https:' in i.lower():
         try:
             path = urllib.parse.urlsplit(i).path
             p = re.compile("/project/([a-zA-Z0-9]*).*", re.IGNORECASE)
