@@ -26,6 +26,7 @@ Table of Contents
   * [The URL is too large...can't I initialize the application with something else?](#the-url-is-too-largecant-i-initialize-the-application-with-something-else)
   * [If it does commits for me, won't it commit other files on my git tree?](#if-it-does-commits-for-me-wont-it-commit-other-files-on-my-git-tree)
   * [Can it also push the commits for me?](#can-it-also-push-the-commits-for-me)
+  * [I want to change the project. How can I do that?](#i-want-to-change-the-project-how-can-i-do-that)
   * [Why not use the premium version?](#why-not-use-the-premium-version)
   * [Example Usage](#example-usage)
     * [Add a commit after editing the ShareLaTeX project](#add-a-commit-after-editing-the-sharelatex-project)
@@ -108,6 +109,11 @@ However, you **can** do all the changes you want in your repository, and then si
 # Can it also push the commits for me?
 
 **This is implemented, but it is experimental** (`-p` option). It should work if you have passwordless pushing in your git settings (be wary of *https* clone links!). Otherwise, it currently blocks and you have to kill it with a  CTRL+C. If you really need this feature, be sure to open up an issue and I'll get straight to it (or better yet, send me a patch!).
+
+# I want to change the project. How can I do that?
+
+If you made a mistake, or if you simply want to change the project ID, you can invoke **sharelatex-git** with the new ID (as if you were starting a new project). A conflict will arise and you will be asked if you want to use the new ID. **Note that this won't delete the previous project's files! Do that on your own!**.
+
 
 # Why not use the premium version?
 
