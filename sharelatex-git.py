@@ -278,24 +278,25 @@ def git_push():
 # repository with all the right gitignore files, fetch the project files,
 # commit any changes and also push them if the user requested.
 #------------------------------------------------------------------------------
-def go(id, message, push):
+def go(id, message, push, dont_commit):
     id = determine_id(id)
 
     ensure_git_repository_started()
     ensure_gitignore_is_fine()
     fetch_updates(id, False)
 
-    if files_changed():
-        if message:
-            Logger().log('Comitting changes. Message: {}.'.format(message))
-        else:
-            Logger().log('Comitting changes. No message.')
-        commit_all_changes(message)
+    if not dont_commit:
+        if files_changed():
+            if message:
+                Logger().log('Comitting changes. Message: {}.'.format(message))
+            else:
+                Logger().log('Comitting changes. No message.')
+            commit_all_changes(message)
 
-        if push:
-            git_push()
-    else:
-        Logger().log('No changes to commit.')
+            if push:
+                git_push()
+        else:
+            Logger().log('No changes to commit.')
 
     write_saved_sharelatex_document(id)
     Logger().log('All done!')
@@ -331,6 +332,7 @@ def parse_input():
     "\t%prog                                                                                           [id from last invocation is used, nothing is added to commit message]")
     parser.add_option('-m', '--message', help='Commit message (default: "").', dest='message', type='string', default='')
     parser.add_option('-p', "--push", help="Push after doing commit (default: don't push) [EXPERIMENTAL]", dest='do_push', action='store_true',default=False)
+    parser.add_option('-n', "--no-commit", help="Don't commit, just download new files.",dest='dont_commit', action='store_true', default=False)
 
     (options, args) = parser.parse_args()
 
@@ -341,7 +343,7 @@ def parse_input():
     else:
         id = None
 
-    return id, options.message, options.do_push
+    return id, options.message, options.do_push, options.dont_commit
 
 #------------------------------------------------------------------------------
 # Go, go, go!

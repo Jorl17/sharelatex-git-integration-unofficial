@@ -31,6 +31,7 @@ Table of Contents
   * [Example Usage](#example-usage)
     * [Add a commit after editing the ShareLaTeX project](#add-a-commit-after-editing-the-sharelatex-project)
     * [Push changes after adding a commit [experimental]](#push-changes-after-adding-a-commit-experimental)
+    * [Checkout changes without actually creating a commit](#checkout-changes-without-actually-creating-a-commit)
   * [What are all the options?](#what-are-all-the-options)
 
 (TOC created with the help of [gh-md-toc](https://github.com/ekalinin/github-markdown-toc))
@@ -139,7 +140,11 @@ You can use the `-p` option:
 
 	sharelatex-git -m "Started the Experimental Validation section" -p
     
+## Checkout changes without actually creating a commit
 
+Another easy one if you use `-n`,`--no-commit`! Do
+
+	sharelatex-git -n
 
    
 # What are all the options?
@@ -150,6 +155,7 @@ You can use the `-p` option:
                         Commit message (default: "").
   -p, --push            Push after doing commit (default: don't push)
                         [EXPERIMENTAL]
+  -n, --no-commit       Don't commit, just download new files.                        
 ```
 
 
