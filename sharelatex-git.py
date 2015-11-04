@@ -164,14 +164,19 @@ def ensure_git_repository_started():
 # so as to only commit changes in our directory. We also commit any possible
 # changes to the gitignore file. The commit message is optional and it is
 # always preceeded by a timestamp and the sharelatex-git-integration identifier
+# The project title, if not null, is also always appended to the message.
 #------------------------------------------------------------------------------
-def commit_all_changes(message):
+def commit_all_changes(message, title):
     run_cmd('git add -A .')
     run_cmd('git add -A {}'.format(get_git_ignore()))
-    if message:
-        run_cmd('git commit -m"[sharelatex-git-integration {}] {}"'.format(get_timestamp(),message))
+    if title:
+        cmd = 'git commit -m"[sharelatex-git-integration {} {}]'.format(title, get_timestamp())
     else:
-        run_cmd('git commit -m"[sharelatex-git-integration {}]"'.format(get_timestamp()))
+        cmd = 'git commit -m"[sharelatex-git-integration {}]'.format(get_timestamp())
+    if message:
+        run_cmd('{} {}"'.format(cmd,message))
+    else:
+        run_cmd('{}"'.format(cmd))
 
 #------------------------------------------------------------------------------
 # Check if any files have changed. This exploits the git status command on the
@@ -183,7 +188,9 @@ def files_changed():
 
 #------------------------------------------------------------------------------
 # Download the sharelatex project and extract it. Die out if there's any
-# problem (e.g. bad ID, bad network connection or private project)
+# problem (e.g. bad ID, bad network connection or private project).
+#
+# Return the project title (null if it can't be determined).
 #------------------------------------------------------------------------------
 def fetch_updates(sharelatex_id, skip_LaTeX_folder=True):
     file_name = 'sharelatex.zip'
@@ -210,6 +217,12 @@ def fetch_updates(sharelatex_id, skip_LaTeX_folder=True):
         for filename in os.listdir('LaTeX'):
             shutil.move(os.path.join('LaTeX', filename), '.')
         os.rmdir('LaTeX')
+
+    try:
+        u = urllib.request.urlopen("https://www.sharelatex.com/project/{}".format(sharelatex_id))
+        return re.compile("<title.*?>(.+?) - ShareLaTeX, Online LaTeX Editor</title>", re.I).findall(u.read().decode())[0]
+    except:
+        return None
 
 #------------------------------------------------------------------------------
 # Fetch the ID of the sharelatex document/project from a previous invocation
@@ -283,7 +296,7 @@ def go(id, message, push, dont_commit):
 
     ensure_git_repository_started()
     ensure_gitignore_is_fine()
-    fetch_updates(id, False)
+    project_title=fetch_updates(id, False)
 
     if not dont_commit:
         if files_changed():
@@ -291,7 +304,7 @@ def go(id, message, push, dont_commit):
                 Logger().log('Comitting changes. Message: {}.'.format(message))
             else:
                 Logger().log('Comitting changes. No message.')
-            commit_all_changes(message)
+            commit_all_changes(message, project_title)
 
             if push:
                 git_push()
