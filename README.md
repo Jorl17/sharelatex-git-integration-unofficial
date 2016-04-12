@@ -17,7 +17,7 @@ Table of Contents
   * [How do I install/uninstall it?](#how-do-i-installuninstall-it)
     * [Examples:](#examples)
       * [Install](#install)
-      * [Install to /usr/local prefix](#install-to-usrlocal-prefix)
+      * [Install to /usr/local/bin prefix](#install-to-usrlocalbin-prefix)
       * [Uninstall](#uninstall)
       * [Uninstall from /usr/local prefix](#uninstall-from-usrlocal-prefix)
   * [How does it work? Is this legal?](#how-does-it-work-is-this-legal)
@@ -73,11 +73,11 @@ Isn't that simple?
     cd sharelatex-git-integration-unofficial
     chmod +x install.sh uninstall.sh
     sudo ./install.sh
-### Install to /usr/local prefix
+### Install to /usr/local/bin prefix
     git clone https://github.com/Jorl17/sharelatex-git-integration-unofficial
     cd sharelatex-git-integration-unofficial
     chmod +x install.sh uninstall.sh
-    sudo ./install.sh /usr/local
+    sudo ./install.sh /usr/local/bin
 ### Uninstall 
     ./uninstall.sh
 ### Uninstall from /usr/local prefix
