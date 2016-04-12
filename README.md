@@ -19,7 +19,7 @@ Table of Contents
       * [Install](#install)
       * [Install to /usr/local/bin prefix](#install-to-usrlocalbin-prefix)
       * [Uninstall](#uninstall)
-      * [Uninstall from /usr/local prefix](#uninstall-from-usrlocal-prefix)
+      * [Uninstall from /usr/local prefix](#uninstall-from-usrlocalbin-prefix)
   * [How does it work? Is this legal?](#how-does-it-work-is-this-legal)
   * [Can I also push changes from git to ShareLaTeX? (e.g. do a <em>git revert</em> and change my project)](#can-i-also-push-changes-from-git-to-sharelatex-eg-do-a-git-revert-and-change-my-project)
   * [Isn't it dangerous to make my project public?](#isnt-it-dangerous-to-make-my-project-public)
@@ -80,8 +80,8 @@ Isn't that simple?
     sudo ./install.sh /usr/local/bin
 ### Uninstall 
     ./uninstall.sh
-### Uninstall from /usr/local prefix
-    ./uninstall.sh /usr/local
+### Uninstall from /usr/local/bin prefix
+    ./uninstall.sh /usr/local/bin
 
 # How does it work? Is this legal?
 
