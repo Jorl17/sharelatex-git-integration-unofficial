@@ -284,7 +284,7 @@ def determine_config_value(key, value):
             while True:
                 print(
                     'Conflicting {key_name}. Given {old}, but previous records show {new}. Which to use?\n1. {old} [old]\n2. {new} [new]'.format(
-                        key_name=key, old=saved_url, new=url))
+                        key_name=key, old=saved_value, new=value))
                 ans = input('Id to use [blank = 2.] -> ')
                 if ans.strip() == '':
                     ans = '2'
