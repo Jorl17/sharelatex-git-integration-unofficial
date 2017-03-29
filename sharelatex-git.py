@@ -238,10 +238,24 @@ def fetch_updates(url, email, password):
         return BeautifulSoup(r.text, 'html.parser').find('title').text.rsplit('-',1)[0].strip()
     except:
         return None
+    
+#------------------------------------------------------------------------------
+# Handles old-style .sharelatex-git files, which only contain single ids of 
+# projects stored in www.sharelatex.com
+#------------------------------------------------------------------------------
+def read_old_style_saved_config_value(key):
+    doc = '.sharelatex-git'
+    if key == 'url':
+        try:
+            Logger().log("Reading project id from an old-style .sharelatex-git file", True, 'YELLOW')
+            with open(doc, 'r') as f:
+                return 'https://www.sharelatex.com/project/{}'.format(f.readline().strip())
+        except:
+            pass
+    return None
 #------------------------------------------------------------------------------
 # Fetch the config value of the sharelatex document/project from a previous
-# invocation
-# These should be stored in a .sharelatex-git file.
+# invocation. Config values are stored in a .sharelatex-git file.
 #------------------------------------------------------------------------------
 def read_saved_config_value(key):
     doc = '.sharelatex-git'
@@ -251,6 +265,8 @@ def read_saved_config_value(key):
         config.read(doc)
         return config['sharelatex'][key]
     except:
+        if os.path.isfile(doc):
+            return read_old_style_saved_config_value(key)
         return None
 
 #------------------------------------------------------------------------------
@@ -260,9 +276,18 @@ def read_saved_config_value(key):
 def write_saved_config_value(key, value):
     doc = '.sharelatex-git'
 
+    if value is None:
+        return
+
+    config = configparser.ConfigParser()
     try:
-        config = configparser.ConfigParser()
         config.read(doc)
+    except:
+        Logger().log("Invalid format found in .sharelatex-git config file, recreating...", True, 'YELLOW')
+        Logger().log("Contents of old-style .sharelatex-git files will be preserverd.", True, 'YELLOW')
+
+        os.remove(doc)
+    try:
         if not config.has_section('sharelatex'):
             config['sharelatex'] = {}
         config['sharelatex'][key] = value
