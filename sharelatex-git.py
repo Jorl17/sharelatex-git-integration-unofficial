@@ -22,16 +22,17 @@
 ## along with sharelatex-git-integration-unofficial.  If not, see <http://www.gnu.org/licenses/>.
 ##
 from optparse import OptionParser
+from bs4 import BeautifulSoup
+from zipfile import ZipFile, BadZipFile
 import os
 import shutil
 import subprocess
 import requests
-from bs4 import BeautifulSoup
-from zipfile import ZipFile, BadZipFile
 import time
 import sys
 import re
 import getpass
+import configparser
 
 #------------------------------------------------------------------------------
 # Logger class, used to log messages. A special method can be used to
@@ -206,7 +207,9 @@ def fetch_updates(url, email, password):
         s = requests.Session()
         
         if email is not None:
-            Logger().log("Logging in {} with user...".format(login_url, email))
+            if password is None:
+                password = getpass.getpass("Enter password: ")
+            Logger().log("Logging in {} with user {}...".format(login_url, email))
             r = s.get(login_url)
             csrf = BeautifulSoup(r.text).find('input', { 'name' : '_csrf' })['value']
             s.post(login_url, { '_csrf' : csrf , 'email' : email , 'password' : password })
@@ -236,57 +239,62 @@ def fetch_updates(url, email, password):
     except:
         return None
 #------------------------------------------------------------------------------
-# Fetch the ID of the sharelatex document/project from a previous invocation
+# Fetch the config value of the sharelatex document/project from a previous
+# invocation
 # These should be stored in a .sharelatex-git file.
 #------------------------------------------------------------------------------
-def read_saved_sharelatex_document():
+def read_saved_config_value(key):
     doc = '.sharelatex-git'
 
     try:
-        with open(doc, 'r') as f:
-            return f.readline().strip()
+        config = configparser.ConfigParser()
+        config.read(doc)
+        return config['sharelatex'][key]
     except:
         return None
 
 #------------------------------------------------------------------------------
-# Write the ID of the sharelatex document/project so that future invocations
-# do not require it. This is stored in a .sharelatex-git file.
+# Write the key value of the sharelatex document/project so that future
+# invocations do not require it. This is stored in a .sharelatex-git file.
 #------------------------------------------------------------------------------
-def write_saved_sharelatex_document(id):
+def write_saved_config_value(key, value):
     doc = '.sharelatex-git'
 
     try:
-        with open(doc, 'w') as f:
-            f.write('{}\n'.format(id))
+        config = configparser.ConfigParser()
+        config.read(doc)
+        if not config.has_section('sharelatex'):
+            config['sharelatex'] = {}
+        config['sharelatex'][key] = value
+        with open(doc, 'w') as configfile:
+            config.write(configfile)
     except:
-        Logger().log("Problem creating .sharelatex-git file", True, 'YELLOW')
+       Logger().log("Problem creating .sharelatex-git file", True, 'YELLOW')
 
 #------------------------------------------------------------------------------
-# Given an id passed by the user (potentially None/empty), as well as the
-# .sharelatex-git file from previous invocations, determine the id of
-# the sharelatex project. In case of conflict, ask the user, but default to
+# Given a key value passed by the user (potentially None/empty), as well as
+# the .sharelatex-git file from previous invocations, determine the key value
+# of the sharelatex project. In case of conflict, ask the user, but default to
 # the one that he/she supplied.
 #------------------------------------------------------------------------------
-def determine_url(url):
-    saved_url = read_saved_sharelatex_document()
-    if url and saved_url:
-        if url != saved_url:
+def determine_config_value(key, value):
+    saved_value = read_saved_config_value(key)
+    if value and saved_value:
+        if value != saved_value:
             while True:
                 print(
-                    'Conflicting url. Given {old}, but previous records show {new}. Which to use?\n1. {old} [old]\n2. {new} [new]'.format(
-                        old=saved_url, new=url))
+                    'Conflicting {key_name}. Given {old}, but previous records show {new}. Which to use?\n1. {old} [old]\n2. {new} [new]'.format(
+                        key_name=key, old=saved_url, new=url))
                 ans = input('Id to use [blank = 2.] -> ')
                 if ans.strip() == '':
                     ans = '2'
                 if ans.strip() == '1' or ans.strip() == '2':
                     break
-            url = saved_url if int(ans.strip()) == 1 else url
-    elif not saved_url and not url:
-        Logger().fatal_error('No url supplied! See (-h) for usage.')
-    elif saved_url:
-        url = saved_url
+            value = saved_value if int(ans.strip()) == 1 else value
+    elif saved_value:
+        value = saved_value
 
-    return url
+    return value
 
 #------------------------------------------------------------------------------
 # EXPERIMENTAL. Do a git push. FIXME
@@ -303,7 +311,11 @@ def git_push():
 # commit any changes and also push them if the user requested.
 #------------------------------------------------------------------------------
 def go(url, email, password, message, push, dont_commit):
-    url = determine_url(url)
+    url = determine_config_value('url', url)
+    email = determine_config_value('email', email)
+
+    if url is None:
+        Logger().fatal_error('No url supplied! See (-h) for usage.')
     
     ensure_git_repository_started()
     ensure_gitignore_is_fine()
@@ -322,7 +334,8 @@ def go(url, email, password, message, push, dont_commit):
         else:
             Logger().log('No changes to commit.')
 
-    write_saved_sharelatex_document(url)
+    write_saved_config_value('url', url)
+    write_saved_config_value('email', email)
     Logger().log('All done!')
 
 #------------------------------------------------------------------------------
@@ -377,9 +390,6 @@ def parse_input():
         parser.error('Too many arguments.')
     else:
         url = None
-
-    if options.email is not None and options.password is None:
-        options.password = getpass.getpass("Enter password: ")
 
     return url, options.email, options.password, options.message, options.do_push, options.dont_commit
 
