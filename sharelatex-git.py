@@ -234,8 +234,8 @@ def fetch_updates(url, email, password):
     os.remove(file_name)
 
     try:
-        u = urllib.request.urlopen(url)
-        return re.compile("<title.*?>(.+?) - ShareLaTeX, Online LaTeX Editor</title>", re.I).findall(u.read().decode())[0]
+        r = s.get(url)
+        return BeautifulSoup(r.text).find('title').text.rsplit('-',1)[0].strip()
     except:
         return None
 #------------------------------------------------------------------------------
