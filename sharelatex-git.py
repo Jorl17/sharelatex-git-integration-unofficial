@@ -211,7 +211,7 @@ def fetch_updates(url, email, password):
                 password = getpass.getpass("Enter password: ")
             Logger().log("Logging in {} with user {}...".format(login_url, email))
             r = s.get(login_url)
-            csrf = BeautifulSoup(r.text).find('input', { 'name' : '_csrf' })['value']
+            csrf = BeautifulSoup(r.text, 'html.parser').find('input', { 'name' : '_csrf' })['value']
             s.post(login_url, { '_csrf' : csrf , 'email' : email , 'password' : password })
 
         r = s.get(download_url, stream=True)
@@ -235,7 +235,7 @@ def fetch_updates(url, email, password):
 
     try:
         r = s.get(url)
-        return BeautifulSoup(r.text).find('title').text.rsplit('-',1)[0].strip()
+        return BeautifulSoup(r.text, 'html.parser').find('title').text.rsplit('-',1)[0].strip()
     except:
         return None
 #------------------------------------------------------------------------------
