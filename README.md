@@ -88,7 +88,7 @@ Isn't that simple?
 
 # Can I also push changes from git to ShareLaTeX? (e.g. do a *git revert* and change my project)
 
-Unfortunately, **this is not supported**. In theory, this could be done if you provided your username and password to **sharelatex-git-integration-unofficial**, but at the moment it is not implemented.
+Unfortunately, **this is not supported**. In theory, this could be done, but at the moment it is not implemented.
 
 However, you **can** do all the changes you want in your repository, and then simply copy the affected files manually to your project. It's kind of a hassle, but unless you're always deleting what you write, 99.99% of the time you'll just want to track the changes -- **that's what this application is for**.
 
