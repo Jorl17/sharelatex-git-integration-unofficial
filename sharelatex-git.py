@@ -1,6 +1,8 @@
+# -*- coding: utf-8 -*-
 #!/usr/bin/env python3
 ##
-## Copyright (C) 2015 João Ricardo Lourenço <jorl17.8@gmail.com>
+## Copyright (C) 2015-2017 João Ricardo Lourenço <jorl17.8@gmail.com>
+## Copyright (C) 2017 Abel Gómez (https://github.com/abelgomez)
 ##
 ## Github: https://github.com/Jorl17
 ##
@@ -22,12 +24,16 @@
 ## along with sharelatex-git-integration-unofficial.  If not, see <http://www.gnu.org/licenses/>.
 ##
 from optparse import OptionParser
-from bs4 import BeautifulSoup
+try:
+    from bs4 import BeautifulSoup
+    import requests
+except ImportError:
+    exit('No bs4 or requests libraries found!\nPerhaps you need to pip install requests bs4?')
+
 from zipfile import ZipFile, BadZipFile
 import os
 import shutil
 import subprocess
-import requests
 import time
 import sys
 import re
@@ -204,23 +210,24 @@ def fetch_updates(url, email, password):
     Logger().log("Downloading files from {}...".format(download_url))
 
     try:
-        s = requests.Session()
+        session = requests.Session()
         
         if email is not None:
             if password is None:
                 password = getpass.getpass("Enter password: ")
             Logger().log("Logging in {} with user {}...".format(login_url, email))
-            r = s.get(login_url)
+            r = session.get(login_url)
             csrf = BeautifulSoup(r.text, 'html.parser').find('input', { 'name' : '_csrf' })['value']
-            s.post(login_url, { '_csrf' : csrf , 'email' : email , 'password' : password })
+            session.post(login_url, { '_csrf' : csrf , 'email' : email , 'password' : password })
 
-        r = s.get(download_url, stream=True)
+        r = session.get(download_url, stream=True)
         with open(file_name, 'wb') as f:
             for chunk in r.iter_content(chunk_size=1024): 
                 if chunk:
                     f.write(chunk)
     except:
         Logger().fatal_error('Could not retrieve files. Perhaps a temporary network failure? Invalid id?')
+        return # Never reached. Here to calm down static analysis
     
     Logger().log("Decompressing files...")
     
@@ -234,7 +241,7 @@ def fetch_updates(url, email, password):
     os.remove(file_name)
 
     try:
-        r = s.get(url)
+        r = session.get(url)
         return BeautifulSoup(r.text, 'html.parser').find('title').text.rsplit('-',1)[0].strip()
     except:
         return None

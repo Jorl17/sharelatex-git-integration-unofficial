@@ -42,19 +42,17 @@ This section tells you all you have to know to get started using **sharelatex-gi
 
 1. First, **[install](#how-do-i-installuninstall-it) the script.**
 
-2. Second, **set your ShareLaTeX project to public** (you can use the read only option).
-
-3. **Change directory to the folder where you want to keep your ShareLaTeX files**. This folder can already be a part of a git repository, but **sharelatex-git** will create a repository if it doesn't exist yet. E.g.
+2. **Change directory to the folder where you want to keep your ShareLaTeX files**. This folder can already be a part of a git repository, but **sharelatex-git** will create a repository if it doesn't exist yet. E.g.
 
 		cd <my desired ShareLaTeX project folder>
 
-4. **Copy the URL address of your ShareLaTeX project** (we'll use https://www.sharelatex.com/project/56147712cc7f5d0adeadbeef as an example).
+3. **Copy the URL address of your ShareLaTeX project** (we'll use https://www.sharelatex.com/project/56147712cc7f5d0adeadbeef as an example).
 
-5. Invoke **sharelatex-git** with that address
+4. Invoke **sharelatex-git** with that address
  
 		sharelatex-git https://www.sharelatex.com/project/56147712cc7f5d0adeadbeef
         
-6. **All done!** Whenever you want to add a new commit with your updated ShareLaTeX project changes, come back to this folder and run
+5. **All done!** Whenever you want to add a new commit with your updated ShareLaTeX project changes, come back to this folder and run
  
 		sharelatex-git
         
@@ -69,11 +67,13 @@ Isn't that simple?
 
 ## Examples:
 ### Install
+    pip install requests bs4
     git clone https://github.com/Jorl17/sharelatex-git-integration-unofficial
     cd sharelatex-git-integration-unofficial
     chmod +x install.sh uninstall.sh
     sudo ./install.sh
 ### Install to /usr/local/bin prefix
+    pip install requests bs4
     git clone https://github.com/Jorl17/sharelatex-git-integration-unofficial
     cd sharelatex-git-integration-unofficial
     chmod +x install.sh uninstall.sh
@@ -85,23 +85,19 @@ Isn't that simple?
 
 # How does it work? Is this legal?
 
-**sharelatex-git-integration-unofficial** doesn't do anything illegal. Since your project is set to public, any person with the URL can access the files and download them. In theory, you could do what **sharelatex-git-integration-unofficial** does on your own. You would download all the files, put them in your folder, and then run a couple of git commands.
+**sharelatex-git-integration-unofficial** doesn't do anything illegal. In theory, you could do what **sharelatex-git-integration-unofficial** does on your own. You would download all the files, put them in your folder, and then run a couple of git commands.
 
 # Can I also push changes from git to ShareLaTeX? (e.g. do a *git revert* and change my project)
 
-Unfortunately, **this is not supported**. In theory, this could be done if you set your project to public and provided your username and password to **sharelatex-git-integration-unofficial**, but at the moment it is not implemented.
+Unfortunately, **this is not supported**. In theory, this could be done if you provided your username and password to **sharelatex-git-integration-unofficial**, but at the moment it is not implemented.
 
 However, you **can** do all the changes you want in your repository, and then simply copy the affected files manually to your project. It's kind of a hassle, but unless you're always deleting what you write, 99.99% of the time you'll just want to track the changes -- **that's what this application is for**.
-
-# Isn't it dangerous to make my project public?
-
-**I don't think so.** As long as you don't share your URL, you should be safe, but don't take my word for it. Perhaps I can cook up a future version where you provide the username and password to **sharelatex-git-integration-unofficial**, but at the moment this really seems unnecessary.
 
 **If this really annoys you, open up an issue** and I'll be sure to get down to it and code you a non-public version (or, better yet, submit a patch if you can!). Heck, that might also support pushing changes from git to your project!
 
 # The URL is too large...can't I initialize the application with something else?
 
-**Well, yes!** If your URL is https://www.sharelatex.com/project/56147712cc7f5d0adeadbeef you can happily just pass 56147712cc7f5d0adeadbeef (the "project ID") and it will work. However, since you only really need to pass the URL once, I don't really see the point.
+**Well, yes!** If your URL is https://www.sharelatex.com/project/56147712cc7f5d0adeadbeef you can happily just pass 56147712cc7f5d0adeadbeef (the "project ID") and it will work. However, since you only really need to pass the URL once, I don't really see the point. Notice that this only works for projects hosted on the ShareLatex server. If you run your own, you really have to pass the URL to the application (how would we know where your server is hosted?)
 
 # If it does commits for me, won't it commit other files on my git tree?
 
@@ -155,7 +151,10 @@ Another easy one if you use `-n`,`--no-commit`! Do
                         Commit message (default: "").
   -p, --push            Push after doing commit (default: don't push)
                         [EXPERIMENTAL]
-  -n, --no-commit       Don't commit, just download new files.                        
+  -n, --no-commit       Don't commit, just download new files.
+  -e EMAIL, --email=EMAIL
+                        E-mail needed for login
+  --password=PASSWORD   Password to authenticate with the given e-mail
 ```
 
 
