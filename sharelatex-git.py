@@ -22,15 +22,17 @@
 ## along with sharelatex-git-integration-unofficial.  If not, see <http://www.gnu.org/licenses/>.
 ##
 from optparse import OptionParser
+from bs4 import BeautifulSoup
+from zipfile import ZipFile, BadZipFile
 import os
 import shutil
 import subprocess
-import urllib.request
-from zipfile import ZipFile, BadZipFile
+import requests
 import time
 import sys
-import urllib.parse
 import re
+import getpass
+import configparser
 
 #------------------------------------------------------------------------------
 # Logger class, used to log messages. A special method can be used to
@@ -192,90 +194,132 @@ def files_changed():
 #
 # Return the project title (null if it can't be determined).
 #------------------------------------------------------------------------------
-def fetch_updates(sharelatex_id, skip_LaTeX_folder=True):
+def fetch_updates(url, email, password):
     file_name = 'sharelatex.zip'
-    final_url = "https://www.sharelatex.com/project/{}/download/zip".format(sharelatex_id)
 
-    Logger().log("Downloading files from {}...".format(final_url))
+    base_url = extract_base_url(url)
+    login_url = "{}/login".format(base_url)
+    download_url = "{}/download/zip".format(url)
+    
+    Logger().log("Downloading files from {}...".format(download_url))
+
     try:
-        urllib.request.urlretrieve(final_url, file_name)
+        s = requests.Session()
+        
+        if email is not None:
+            if password is None:
+                password = getpass.getpass("Enter password: ")
+            Logger().log("Logging in {} with user {}...".format(login_url, email))
+            r = s.get(login_url)
+            csrf = BeautifulSoup(r.text, 'html.parser').find('input', { 'name' : '_csrf' })['value']
+            s.post(login_url, { '_csrf' : csrf , 'email' : email , 'password' : password })
+
+        r = s.get(download_url, stream=True)
+        with open(file_name, 'wb') as f:
+            for chunk in r.iter_content(chunk_size=1024): 
+                if chunk:
+                    f.write(chunk)
     except:
         Logger().fatal_error('Could not retrieve files. Perhaps a temporary network failure? Invalid id?')
+    
     Logger().log("Decompressing files...")
+    
     try:
         with ZipFile(file_name, 'r') as f:
             f.extractall()
     except BadZipFile:
         os.remove(file_name)
-        Logger().fatal_error("Downloaded file is not a zip file. Have you made sure that your project is public?")
+        Logger().fatal_error("Downloaded file is not a zip file. Make sure that your project is public or you have provided a valid e-mail and password?")
 
     os.remove(file_name)
 
-    # This is deprecated and a mistake. Blame J'Pedro's thesis.
-    if skip_LaTeX_folder:
-        Logger().log("Moving files out of LaTeX folder...")
-        for filename in os.listdir('LaTeX'):
-            shutil.move(os.path.join('LaTeX', filename), '.')
-        os.rmdir('LaTeX')
-
     try:
-        u = urllib.request.urlopen("https://www.sharelatex.com/project/{}".format(sharelatex_id))
-        return re.compile("<title.*?>(.+?) - ShareLaTeX, Online LaTeX Editor</title>", re.I).findall(u.read().decode())[0]
+        r = s.get(url)
+        return BeautifulSoup(r.text, 'html.parser').find('title').text.rsplit('-',1)[0].strip()
     except:
         return None
-
+    
 #------------------------------------------------------------------------------
-# Fetch the ID of the sharelatex document/project from a previous invocation
-# These should be stored in a .sharelatex-git file.
+# Handles old-style .sharelatex-git files, which only contain single ids of 
+# projects stored in www.sharelatex.com
 #------------------------------------------------------------------------------
-def read_saved_sharelatex_document():
+def read_old_style_saved_config_value(key):
+    doc = '.sharelatex-git'
+    if key == 'url':
+        try:
+            Logger().log("Reading project id from an old-style .sharelatex-git file", True, 'YELLOW')
+            with open(doc, 'r') as f:
+                return 'https://www.sharelatex.com/project/{}'.format(f.readline().strip())
+        except:
+            pass
+    return None
+#------------------------------------------------------------------------------
+# Fetch the config value of the sharelatex document/project from a previous
+# invocation. Config values are stored in a .sharelatex-git file.
+#------------------------------------------------------------------------------
+def read_saved_config_value(key):
     doc = '.sharelatex-git'
 
     try:
-        with open(doc, 'r') as f:
-            return f.readline().strip()
+        config = configparser.ConfigParser()
+        config.read(doc)
+        return config['sharelatex'][key]
     except:
+        if os.path.isfile(doc):
+            return read_old_style_saved_config_value(key)
         return None
 
 #------------------------------------------------------------------------------
-# Write the ID of the sharelatex document/project so that future invocations
-# do not require it. This is stored in a .sharelatex-git file.
+# Write the key value of the sharelatex document/project so that future
+# invocations do not require it. This is stored in a .sharelatex-git file.
 #------------------------------------------------------------------------------
-def write_saved_sharelatex_document(id):
+def write_saved_config_value(key, value):
     doc = '.sharelatex-git'
 
+    if value is None:
+        return
+
+    config = configparser.ConfigParser()
     try:
-        with open(doc, 'w') as f:
-            f.write('{}\n'.format(id))
+        config.read(doc)
     except:
-        Logger().log("Problem creating .sharelatex-git file", True, 'YELLOW')
+        Logger().log("Invalid format found in .sharelatex-git config file, recreating...", True, 'YELLOW')
+        Logger().log("Contents of old-style .sharelatex-git files will be preserverd.", True, 'YELLOW')
+
+        os.remove(doc)
+    try:
+        if not config.has_section('sharelatex'):
+            config['sharelatex'] = {}
+        config['sharelatex'][key] = value
+        with open(doc, 'w') as configfile:
+            config.write(configfile)
+    except:
+       Logger().log("Problem creating .sharelatex-git file", True, 'YELLOW')
 
 #------------------------------------------------------------------------------
-# Given an id passed by the user (potentially None/empty), as well as the
-# .sharelatex-git file from previous invocations, determine the id of
-# the sharelatex project. In case of conflict, ask the user, but default to
+# Given a key value passed by the user (potentially None/empty), as well as
+# the .sharelatex-git file from previous invocations, determine the key value
+# of the sharelatex project. In case of conflict, ask the user, but default to
 # the one that he/she supplied.
 #------------------------------------------------------------------------------
-def determine_id(id):
-    saved_id = read_saved_sharelatex_document()
-    if id and saved_id:
-        if id != saved_id:
+def determine_config_value(key, value):
+    saved_value = read_saved_config_value(key)
+    if value and saved_value:
+        if value != saved_value:
             while True:
                 print(
-                    'Conflicting ids. Given {old}, but previous records show {new}. Which to use?\n1. {old} [old]\n2. {new} [new]'.format(
-                        old=saved_id, new=id))
+                    'Conflicting {key_name}. Given {old}, but previous records show {new}. Which to use?\n1. {old} [old]\n2. {new} [new]'.format(
+                        key_name=key, old=saved_value, new=value))
                 ans = input('Id to use [blank = 2.] -> ')
                 if ans.strip() == '':
                     ans = '2'
                 if ans.strip() == '1' or ans.strip() == '2':
                     break
-            id = saved_id if int(ans.strip()) == 1 else id
-    elif not saved_id and not id:
-        Logger().fatal_error('No id supplied! See (-h) for usage.')
-    elif saved_id:
-        id = saved_id
+            value = saved_value if int(ans.strip()) == 1 else value
+    elif saved_value:
+        value = saved_value
 
-    return id
+    return value
 
 #------------------------------------------------------------------------------
 # EXPERIMENTAL. Do a git push. FIXME
@@ -291,12 +335,16 @@ def git_push():
 # repository with all the right gitignore files, fetch the project files,
 # commit any changes and also push them if the user requested.
 #------------------------------------------------------------------------------
-def go(id, message, push, dont_commit):
-    id = determine_id(id)
+def go(url, email, password, message, push, dont_commit):
+    url = determine_config_value('url', url)
+    email = determine_config_value('email', email)
 
+    if url is None:
+        Logger().fatal_error('No url supplied! See (-h) for usage.')
+    
     ensure_git_repository_started()
     ensure_gitignore_is_fine()
-    project_title=fetch_updates(id, False)
+    project_title=fetch_updates(url, email, password)
 
     if not dont_commit:
         if files_changed():
@@ -311,34 +359,44 @@ def go(id, message, push, dont_commit):
         else:
             Logger().log('No changes to commit.')
 
-    write_saved_sharelatex_document(id)
+    write_saved_config_value('url', url)
+    write_saved_config_value('email', email)
     Logger().log('All done!')
 
 #------------------------------------------------------------------------------
-# Determine the ID from user-supplied input. The user can supply a URL or
+# Determine the URL from user-supplied input. The user can supply a URL or
 # the ID directly. Note that the user can even pass the ZIP URL directly, as
 # the regex catches only the relevant portion.
 #------------------------------------------------------------------------------
-def extract_id_from_input(i):
+def normalize_input(i):
     if 'http:' in i.lower() or 'https:' in i.lower():
         try:
-            path = urllib.parse.urlsplit(i).path
-            p = re.compile("/project/([a-zA-Z0-9]*).*", re.IGNORECASE)
-            return p.search(path).group(1)
+            p = re.compile("(http.*/project/[a-zA-Z0-9]*).*", re.IGNORECASE)
+            return p.search(i).group(1)
         except:
-            Logger().fatal_error('Unrecognized id supplied ({}) [http/https]'.format(i))
+            Logger().fatal_error('Unrecognized url supplied ({})'.format(i))
     else:
         p = re.compile("[a-zA-Z0-9]*")
         if p.match(i):
-            return i
+            return 'https://www.sharelatex.com/project/{}'.format(i)
         else:
             Logger().log('Unrecognized id supplied ({})'.format(i))
+
+#------------------------------------------------------------------------------
+# Extract the base URL from the project's full URL
+#------------------------------------------------------------------------------
+def extract_base_url(url):
+    try:
+        p = re.compile("(http.*)/project/[a-zA-Z0-9]*", re.IGNORECASE)
+        return p.search(url).group(1)
+    except:
+        Logger().fatal_error('Unexpected url format ({}), unable to extract service\'s base url'.format(url))
 
 #------------------------------------------------------------------------------
 # Parse user input.
 #------------------------------------------------------------------------------
 def parse_input():
-    parser = OptionParser("usage: %prog [options] [id].\n"
+    parser = OptionParser("usage: %prog [options] [url|id].\n"
     "e.g.\n\t%prog -m 'Wrote Thesis introduction' https://www.sharelatex.com/project/56147712cc7f5d0adeadbeef\n"
     "\t%prog -m 'Wrote Thesis introduction' 56147712cc7f5d0adeadbeef\n"
     "\t%prog -m 'Wrote Thesis introduction'                                                            [id from last invocation is used]\n"
@@ -346,17 +404,19 @@ def parse_input():
     parser.add_option('-m', '--message', help='Commit message (default: "").', dest='message', type='string', default='')
     parser.add_option('-p', "--push", help="Push after doing commit (default: don't push) [EXPERIMENTAL]", dest='do_push', action='store_true',default=False)
     parser.add_option('-n', "--no-commit", help="Don't commit, just download new files.",dest='dont_commit', action='store_true', default=False)
+    parser.add_option('-e', '--email', help='E-mail needed for login', dest='email', action='store', type='string')
+    parser.add_option('--password', help='Password to authenticate with the given e-mail', dest='password', type='string')
 
     (options, args) = parser.parse_args()
 
     if len(args) == 1:
-        id = extract_id_from_input(args[0])
+        url = normalize_input(args[0])
     elif len(args) > 1:
         parser.error('Too many arguments.')
     else:
-        id = None
+        url = None
 
-    return id, options.message, options.do_push, options.dont_commit
+    return url, options.email, options.password, options.message, options.do_push, options.dont_commit
 
 #------------------------------------------------------------------------------
 # Go, go, go!
