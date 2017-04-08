@@ -4,7 +4,7 @@
 
 With **sharelatex-git-integration-unofficial**, you can use any folder in a **git repository** to keep your ShareLaTeX project and track its changes. The script automatically **downloads the most recent files** and **does git commits for you**. You can also specify an optional commit message. It will even create your git repository if you haven't yet!
 
-The only requirement of **sharelatex-git-integration-unofficial** is that you set your project's settings to public (you can use the read only option). Do that, and you will instantly be able to use this script to track the changes to your project, be it a thesis, a paper or something entirely different.
+**sharelatex-git-integration-unofficial** works in public and private repositores alike, as well as on your own hosted instances. With it, you will instantly be able to track the changes to your project, be it a thesis, a paper or something entirely different.
 
 **Install instructions** can be found [here](#how-do-i-installuninstall-it). A **Quickstart guide** can be found [here](#quickstart-getting-started). Other **example usage** can be found [here](#example-usage).
 
@@ -22,7 +22,6 @@ Table of Contents
       * [Uninstall from /usr/local prefix](#uninstall-from-usrlocalbin-prefix)
   * [How does it work? Is this legal?](#how-does-it-work-is-this-legal)
   * [Can I also push changes from git to ShareLaTeX? (e.g. do a <em>git revert</em> and change my project)](#can-i-also-push-changes-from-git-to-sharelatex-eg-do-a-git-revert-and-change-my-project)
-  * [Isn't it dangerous to make my project public?](#isnt-it-dangerous-to-make-my-project-public)
   * [The URL is too large...can't I initialize the application with something else?](#the-url-is-too-largecant-i-initialize-the-application-with-something-else)
   * [If it does commits for me, won't it commit other files on my git tree?](#if-it-does-commits-for-me-wont-it-commit-other-files-on-my-git-tree)
   * [Can it also push the commits for me?](#can-it-also-push-the-commits-for-me)
@@ -93,11 +92,11 @@ Unfortunately, **this is not supported**. In theory, this could be done if you p
 
 However, you **can** do all the changes you want in your repository, and then simply copy the affected files manually to your project. It's kind of a hassle, but unless you're always deleting what you write, 99.99% of the time you'll just want to track the changes -- **that's what this application is for**.
 
-**If this really annoys you, open up an issue** and I'll be sure to get down to it and code you a non-public version (or, better yet, submit a patch if you can!). Heck, that might also support pushing changes from git to your project!
+**If this really annoys you, open up an issue**!
 
 # The URL is too large...can't I initialize the application with something else?
 
-**Well, yes!** If your URL is https://www.sharelatex.com/project/56147712cc7f5d0adeadbeef you can happily just pass 56147712cc7f5d0adeadbeef (the "project ID") and it will work. However, since you only really need to pass the URL once, I don't really see the point. Notice that this only works for projects hosted on the ShareLatex server. If you run your own, you really have to pass the URL to the application (how would we know where your server is hosted?)
+**Well, yes!** If your URL is https://www.sharelatex.com/project/56147712cc7f5d0adeadbeef you can happily just pass 56147712cc7f5d0adeadbeef (the "project ID") and it will work. However, since you only really need to pass the URL once, I don't really see the point. Notice that this only works for projects hosted on the ShareLaTeX server. If you run your own, you really have to pass the URL to the application (how would we know where your server is hosted?)
 
 # If it does commits for me, won't it commit other files on my git tree?
 
