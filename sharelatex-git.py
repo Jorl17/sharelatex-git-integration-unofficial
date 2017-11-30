@@ -1,5 +1,5 @@
-# -*- coding: utf-8 -*-
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 ##
 ## Copyright (C) 2015-2017 João Ricardo Lourenço <jorl17.8@gmail.com>
 ## Copyright (C) 2017 Abel Gómez (https://github.com/abelgomez)
