@@ -237,10 +237,10 @@ def fetch_updates(url, email, password):
     
     try:
         with ZipFile(file_name, 'r') as f:
+            f.extractall()
             for zipfile_info in f.infolist():
                 commit_add_file(zipfile_info.filename)
                 Logger().log("Adding file {}".format(zipfile_info.filename))
-            f.extractall()
     except BadZipFile:
         os.remove(file_name)
         Logger().fatal_error("Downloaded file is not a zip file. Make sure that your project is public or you have provided a valid e-mail and password?")
