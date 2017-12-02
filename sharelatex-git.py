@@ -1,5 +1,5 @@
-# -*- coding: utf-8 -*-
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 ##
 ## Copyright (C) 2015-2017 João Ricardo Lourenço <jorl17.8@gmail.com>
 ## Copyright (C) 2017 Abel Gómez (https://github.com/abelgomez)
@@ -168,14 +168,18 @@ def ensure_git_repository_started():
         init_git_repository()
 
 #------------------------------------------------------------------------------
-# Commit all changes. Note that we do this with '.' at the end of the command,
-# so as to only commit changes in our directory. We also commit any possible
-# changes to the gitignore file. The commit message is optional and it is
-# always preceeded by a timestamp and the sharelatex-git-integration identifier
-# The project title, if not null, is also always appended to the message.
+# Add the file to the staged area for commit
+#------------------------------------------------------------------------------
+def commit_add_file(filename):
+    run_cmd('git add {}'.format(filename))
+
+#------------------------------------------------------------------------------
+# We also commit any possible changes to the gitignore file. The commit message
+# is optional and it is always preceeded by a timestamp and the
+# sharelatex-git-integration identifier The project title, if not null, is
+# also always appended to the message.
 #------------------------------------------------------------------------------
 def commit_all_changes(message, title):
-    run_cmd('git add -A .')
     run_cmd('git add -A {}'.format(get_git_ignore()))
     if title:
         cmd = 'git commit -m"[sharelatex-git-integration {} {}]'.format(title, get_timestamp())
@@ -234,6 +238,9 @@ def fetch_updates(url, email, password):
     try:
         with ZipFile(file_name, 'r') as f:
             f.extractall()
+            for zipfile_info in f.infolist():
+                commit_add_file(zipfile_info.filename)
+                Logger().log("Adding file {}".format(zipfile_info.filename))
     except BadZipFile:
         os.remove(file_name)
         Logger().fatal_error("Downloaded file is not a zip file. Make sure that your project is public or you have provided a valid e-mail and password?")
